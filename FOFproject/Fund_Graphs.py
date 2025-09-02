@@ -4,16 +4,20 @@ import plotly.graph_objects as go
 
 def plot_cumulative_returns(start_month, end_month, asset_columns, df, style="default"):
     """
-    Inputs
-    ------
+    Parameters
+    ----------
     start_month : str | datetime-like
         Inclusive start of the plotting window, e.g. "2018-01".
-    end_month   : str | datetime-like
+    end_month : str | datetime-like
         Inclusive end of the plotting window, e.g. "2018-12".
     asset_columns : list[str]
-        Column names in `df` to plot.
+        Column names in ``df`` to plot.
     df : pandas.DataFrame
         Time series data at monthly (or higher) frequency with a datetime index.
+    style : str, optional
+        Visual style. Include ``"dark"`` or ``"light"`` for alternative colour
+        palettes. If ``"box"`` is present (e.g. ``"dark-box"``), a labelled
+        box showing the final value of each trace is added.
 
     Returns
     -------
@@ -28,9 +32,10 @@ def plot_cumulative_returns(start_month, end_month, asset_columns, df, style="de
         "MSCI WORLD": "#B8AEA0",
     }
 
-    if style == "dark":
+    add_final_box = "box" in style
+    if "dark" in style:
         palette = {"RDGFF": "#B58B80", "MSCI CHINA": "#DACEBF", "MSCI WORLD": "#C1AE94"}
-    elif style == "light":
+    elif "light" in style:
         palette = {"RDGFF": "#E0E0E0", "MSCI CHINA": "#A67C52", "MSCI WORLD": "#6A5ACD"}
 
     default_color = "#888888"
@@ -96,16 +101,33 @@ def plot_cumulative_returns(start_month, end_month, asset_columns, df, style="de
             )
         )
 
+        final_value = cumulative_ret.iloc[-1]
         fig.add_trace(
             go.Scatter(
                 x=[months[-1]],
-                y=[cumulative_ret.iloc[-1]],
+                y=[final_value],
                 mode="markers",
                 marker=dict(size=12 if is_lead else 9, color=color, line=dict(width=2, color="white")),
                 showlegend=False,
                 hoverinfo="skip",
             )
         )
+
+        if add_final_box:
+            fig.add_annotation(
+                x=months[-1],
+                y=final_value,
+                text=fmt_pct(final_value),
+                showarrow=False,
+                xanchor="left",
+                yanchor="middle",
+                xshift=8,
+                font=dict(color=color),
+                bgcolor="white",
+                bordercolor=color,
+                borderwidth=1,
+                borderpad=4,
+            )
 
     # --------------------------- layout ---------------------------
     fig.update_layout(
